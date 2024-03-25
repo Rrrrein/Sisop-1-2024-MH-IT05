@@ -1,1 +1,5 @@
-# Sisop-1-2024-MH-IT05
+# Laporan Penyelesaian Soal-Soal
+## Soal 1
+## Soal 2
+## Soal 3
+## Soal 4
