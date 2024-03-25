@@ -2,7 +2,7 @@ log_directory="/home/masgan/log"
 current_hour=$(date +"%Y%m%d%H")
 aggregated_log_file="${log_directory}/metrics_agg_${current_hour}.log"
 
-# Fungsi untuk mengkonversi nilai ke MB jika diperlukan
+# Fungsi untuk mengkonversi nilai ke MB
 convert_to_mb() {
     size=$1
     # Cek apakah size mengandung 'M' atau 'K' dan konversi jika perlu
@@ -15,16 +15,13 @@ convert_to_mb() {
     fi
 }
 
-# Create the header for the CSV file
 echo "type,mem_total,mem_used,mem_free,mem_shared,mem_buff,mem_available,swap_total,swap_used,swap_free,path,path_size" > "$aggregated_log_file"
 
-# Initialize variables
 min_path_size=$(du -sh "${log_directory}" | cut -f1)
 max_path_size=$min_path_size
 min_path_size=$(convert_to_mb "$min_path_size")
 max_path_size=$(convert_to_mb "$max_path_size")
 
-# Initialize arrays for metrics
 declare -A min max avg
 metrics=(mem_total mem_used mem_free mem_shared mem_buff mem_available swap_total swap_used swap_free)
 for metric in "${metrics[@]}"; do
@@ -32,20 +29,16 @@ for metric in "${metrics[@]}"; do
     max["$metric"]=0
 done
 
-# Process each log file for the current hour
 for file in "${log_directory}"/metrics_"${current_hour}"*.log; do
     if [[ -r "$file" && -s "$file" ]]; then
         while IFS=',' read -r "${metrics[@]}" _ path_size; do
-            # Skip the header line
             [[ $mem_total == "mem_total" ]] && continue
 
-            # Update the min and max values for metrics
             for metric in "${metrics[@]}"; do
                 (( ${!metric} < min["$metric"] )) && min["$metric"]=${!metric}
                 (( ${!metric} > max["$metric"] )) && max["$metric"]=${!metric}
             done
 
-            # Convert path size to MB and update min and max
             path_size=$(convert_to_mb "$path_size")
             [[ "$path_size" < "$min_path_size" ]] && min_path_size=$path_size
             [[ "$path_size" > "$max_path_size" ]] && max_path_size=$path_size
@@ -53,13 +46,11 @@ for file in "${log_directory}"/metrics_"${current_hour}"*.log; do
     fi
 done
 
-# Calculate the averages
 for metric in "${metrics[@]}"; do
     avg["$metric"]=$(echo "scale=2; (${min["$metric"]} + ${max["$metric"]}) / 2" | bc)
 done
 average_path_size=$(echo "$min_path_size + $max_path_size" | sed 's/M//g' | awk '{printf "%.2fM\n", ($1 + $2)/2}')
 
-# Output the results to the aggregated log file
 {
     echo -n "minimum,"
     for metric in "${metrics[@]}"; do echo -n "${min[$metric]},"; done
