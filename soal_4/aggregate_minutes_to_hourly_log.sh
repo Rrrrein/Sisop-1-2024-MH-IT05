@@ -77,4 +77,4 @@ average_path_size=$(echo "$min_path_size + $max_path_size" | sed 's/M//g' | awk 
 # Set permissions
 chmod 600 "$aggregated_log_file"
 
-#0 * * * * /home/masgan/log/aggregate_minutes_to_hourly_log.sh
+#59 * * * * /home/masgan/log/aggregate_minutes_to_hourly_log.sh
